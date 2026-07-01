@@ -1,50 +1,85 @@
-# Welcome to your Expo app 👋
+# Money Manager
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A personal finance tracking mobile app built with React Native and Expo. Record your income and expenses, organize them by category, and keep an eye on your account balance — all stored locally on your device.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Transaction tracking** — Add income and expense entries with a title, amount, category, date, and optional note
+- **Account summary** — Dashboard card showing total credits, total expenses, and net balance
+- **Category management** — Create and delete custom categories for both income and expenses
+- **Offline-first** — All data is persisted locally using AsyncStorage; no account or internet connection required
+- **INR currency** — Amounts are formatted in Indian Rupees (₹)
 
-   ```bash
-   npm install
-   ```
+## Screens
 
-2. Start the app
+| Screen | Description |
+| --- | --- |
+| Transactions | Main dashboard with account summary and a date-sorted transaction list |
+| Categories | Segmented view to browse, add, and delete income/expense categories |
+| Add Transaction | Form to record a new transaction (title, amount, type, category, date, notes) |
+| Add Category | Form to create a new category with a name and type |
 
-   ```bash
-   npx expo start
-   ```
+## Project Structure
 
-In the output, you'll find options to open the app in a
+```
+app/
+  (tabs)/
+    index.tsx          # Transactions screen
+    category.tsx       # Categories screen
+    _layout.tsx        # Tab navigator layout
+  add-transaction.tsx  # Add transaction screen
+  add-category.tsx     # Add category screen
+  _layout.tsx          # Root layout with context providers
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+contexts/
+  transactions-context.tsx  # Transaction state + AsyncStorage persistence
+  categories-context.tsx    # Category state + AsyncStorage persistence
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+constants/
+  sample-data.ts       # Shared TypeScript types (Transaction, Category)
+  theme.ts             # Theme constants
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+components/            # Shared UI components
+hooks/                 # Custom hooks (color scheme, theme color)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Tech Stack
 
-## Learn more
+- [Expo SDK 54](https://expo.dev) with [Expo Router v6](https://docs.expo.dev/router/introduction/) for file-based navigation
+- React 19 + TypeScript
+- React Context API for global state management
+- [@react-native-async-storage/async-storage](https://github.com/react-native-async-storage/async-storage) for local persistence
+- [@expo/vector-icons](https://icons.expo.fyi/) (Ionicons) for icons
 
-To learn more about developing your project with Expo, look at the following resources:
+## Getting Started
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Prerequisites
 
-## Join the community
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- iOS Simulator, Android Emulator, or the [Expo Go](https://expo.dev/go) app on your device
 
-Join our community of developers creating universal apps.
+### Installation
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install
+```
+
+### Running the app
+
+```bash
+# Start the Expo dev server
+npx expo start
+```
+
+Then press:
+- `i` to open in iOS Simulator
+- `a` to open in Android Emulator
+- Scan the QR code with Expo Go on your device
+
+## Architecture Notes
+
+- Both `TransactionsContext` and `CategoriesContext` follow the same pattern: hydrate from AsyncStorage on mount, then auto-persist to storage on every state change.
+- Data validation runs on hydration to guard against corrupt or malformed stored data.
+- Transactions are sorted by date descending (newest first), with `createdAt` as a tiebreaker.
+- There is no cloud sync, authentication, or analytics — the app is entirely local.
