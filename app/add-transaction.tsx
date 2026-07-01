@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   SafeAreaView,
@@ -20,15 +20,26 @@ type TransactionType = 'income' | 'expense';
 
 export default function AddTransactionScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const { categories } = useCategories();
-  const { addTransaction } = useTransactions();
+  const { transactions, addTransaction, updateTransaction } = useTransactions();
 
-  const [purpose, setPurpose] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<TransactionType>('income');
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [dateInput, setDateInput] = useState(formatDateInput(new Date()));
-  const [note, setNote] = useState('');
+  const existing = id ? (transactions.find(t => t.id === id) ?? null) : null;
+  const isEditMode = !!existing;
+
+  const [purpose, setPurpose] = useState(existing?.title ?? '');
+  const [amount, setAmount] = useState(existing ? String(existing.amount) : '');
+  const [type, setType] = useState<TransactionType>(existing?.type ?? 'income');
+  const [categoryId, setCategoryId] = useState<string | null>(() => {
+    if (!existing) return null;
+    return (
+      categories.find(c => c.name === existing.category && c.type === existing.type)?.id ?? null
+    );
+  });
+  const [dateInput, setDateInput] = useState(
+    existing ? formatDateInput(new Date(existing.date)) : formatDateInput(new Date())
+  );
+  const [note, setNote] = useState(existing?.note ?? '');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const filteredCategories = useMemo(
@@ -69,26 +80,41 @@ export default function AddTransactionScreen() {
       ? new Date().toISOString()
       : new Date(parsedDate.setHours(0, 0, 0, 0)).toISOString();
 
-    addTransaction({
-      title: trimmedPurpose,
-      amount: amountValue,
-      type,
-      category: selectedCategory.name,
-      date: isoDate,
-      note: note.trim(),
-    });
+    if (isEditMode && existing) {
+      updateTransaction({
+        id: existing.id,
+        title: trimmedPurpose,
+        amount: amountValue,
+        type,
+        category: selectedCategory.name,
+        date: isoDate,
+        note: note.trim(),
+      });
+    } else {
+      addTransaction({
+        title: trimmedPurpose,
+        amount: amountValue,
+        type,
+        category: selectedCategory.name,
+        date: isoDate,
+        note: note.trim(),
+      });
+    }
 
     router.back();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen options={{ title: isEditMode ? 'Edit Transaction' : 'Add Transaction' }} />
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <TouchableOpacity style={styles.backButton} activeOpacity={0.7} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#2F2763" />
         </TouchableOpacity>
-        <Text style={styles.title}>Add Transaction</Text>
-        <Text style={styles.subtitle}>Fill the details below to record a new transaction.</Text>
+        <Text style={styles.title}>{isEditMode ? 'Edit Transaction' : 'Add Transaction'}</Text>
+        <Text style={styles.subtitle}>
+          {isEditMode ? 'Update the details below.' : 'Fill the details below to record a new transaction.'}
+        </Text>
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Transaction details</Text>
@@ -212,7 +238,7 @@ export default function AddTransactionScreen() {
           disabled={saveDisabled}>
           <Ionicons name="save-outline" size={18} color={saveDisabled ? '#C7C3EB' : '#ffffff'} />
           <Text style={[styles.actionText, styles.saveText, saveDisabled ? styles.saveTextDisabled : null]}>
-            Save
+            {isEditMode ? 'Update' : 'Save'}
           </Text>
         </TouchableOpacity>
       </View>

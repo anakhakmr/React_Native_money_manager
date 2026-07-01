@@ -18,10 +18,13 @@ type AddTransactionInput = {
   note?: string;
 };
 
+type UpdateTransactionInput = AddTransactionInput & { id: string };
+
 type TransactionsContextValue = {
   transactions: TransactionItem[];
   hydrated: boolean;
   addTransaction: (input: AddTransactionInput) => void;
+  updateTransaction: (input: UpdateTransactionInput) => void;
   removeTransaction: (id: string) => void;
   clearTransactions: () => void;
 };
@@ -94,6 +97,26 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateTransaction = useCallback((input: UpdateTransactionInput) => {
+    setTransactions(prev =>
+      sortTransactions(
+        prev.map(t =>
+          t.id !== input.id
+            ? t
+            : {
+                ...t,
+                title: input.title.trim(),
+                amount: input.amount,
+                type: input.type,
+                category: input.category,
+                note: input.note ?? '',
+                date: input.date,
+              }
+        )
+      )
+    );
+  }, []);
+
   const removeTransaction = useCallback((id: string) => {
     setTransactions(prev => prev.filter(transaction => transaction.id !== id));
   }, []);
@@ -107,10 +130,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       transactions,
       hydrated,
       addTransaction,
+      updateTransaction,
       removeTransaction,
       clearTransactions,
     }),
-    [transactions, hydrated, addTransaction, removeTransaction, clearTransactions]
+    [transactions, hydrated, addTransaction, updateTransaction, removeTransaction, clearTransactions]
   );
 
   return <TransactionsContext.Provider value={value}>{children}</TransactionsContext.Provider>;

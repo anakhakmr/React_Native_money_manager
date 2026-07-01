@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   SafeAreaView,
   StyleSheet,
@@ -121,6 +122,24 @@ export default function TransactionsScreen() {
 }
 
 function TransactionCard({ transaction }: { transaction: TransactionItem }) {
+  const router = useRouter();
+  const { removeTransaction } = useTransactions();
+
+  const handleEdit = () => {
+    router.push({ pathname: '/add-transaction', params: { id: transaction.id } });
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Transaction',
+      `Delete "${transaction.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => removeTransaction(transaction.id) },
+      ]
+    );
+  };
+
   const date = new Date(transaction.date);
   const day = date.getDate().toString().padStart(2, '0');
   const monthShort = MONTHS_SHORT[date.getMonth()];
@@ -164,9 +183,14 @@ function TransactionCard({ transaction }: { transaction: TransactionItem }) {
         <Text style={styles.transactionDate}>{formattedDate}</Text>
       </View>
 
-      <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
-        <Ionicons name="pencil" size={16} color="#9AA0B4" />
-      </TouchableOpacity>
+      <View style={styles.cardActions}>
+        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7} onPress={handleEdit}>
+          <Ionicons name="pencil" size={16} color="#9AA0B4" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} activeOpacity={0.7} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={16} color="#E04848" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -383,8 +407,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#A1A7BA',
   },
-  editButton: {
+  cardActions: {
     marginLeft: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  actionButton: {
     padding: 6,
   },
   emptyState: {
